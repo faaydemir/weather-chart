@@ -45,6 +45,10 @@ async function draw() {
         x: d => d.time,
         y: d => d.max,
         yStart: d => d.min,
+        brush: {
+
+
+        },
         line: {
             colorMap: d => "white",
             y: d => d.average,

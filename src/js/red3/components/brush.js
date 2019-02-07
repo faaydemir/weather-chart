@@ -3,9 +3,10 @@
  * @param  {} data data to visualize
  * @param  {} config component configuration
  */
-
-import d3Base from './d3-base';
 import * as d3 from 'd3';
+import d3Base from './d3-base';
+import Handler from './brush-handler';
+
 
 export default class BrushX extends d3Base {
     constructor(container, data, config) {
@@ -25,12 +26,7 @@ export default class BrushX extends d3Base {
             height: "100%",
             minRange: 0,
             brushHeight: 140,
-            // handle: {
-            //     type: TriangleBrushHandle,
-            //     config: {
-            //         orientation: 'X'
-            //     }
-            // }
+            handle: Handler,
         }
 
         // brush move handlers
@@ -49,9 +45,9 @@ export default class BrushX extends d3Base {
                 var sx = s.map(self.scaleX.invert);
                 self.handle.update(s);
                 self.gBrush.selectAll(".selection")
-                    .attr("y", self.height - self.config.brushHeight)
-                    .attr("opacity", 0.1)
-                    .attr("height", self.config.brushHeight);
+                    .attr("y", 0) //self.height - self.config.brushHeight
+                    .attr("opacity", 1)
+                    .attr("height", self.config.height);
             }
         }
     }
@@ -64,6 +60,7 @@ export default class BrushX extends d3Base {
             ])
             .on("start brush end", this._brushMoveHandler(this));
 
+
         this.gBrush = this.container.append("g")
             .attr("class", "brush")
             .call(this.brush);
@@ -75,81 +72,14 @@ export default class BrushX extends d3Base {
                 type: "e"
             }])
             .enter();
-        this.handle = new MoonPhaseHandler(handleSelection, this.width, this.height);
-        this.gBrush.call(this.brush.move, [1, 5].map(this.scaleX));
+        this.handle = new this.config.handle(handleSelection, this.width, this.height);
+        this.gBrush.call(this.brush.move, this.scaleX.domain());
         this.gBrush.selectAll(".selection").attr("fill", "white");
-        this.gBrush.selectAll(".selection").attr("y", this.height - this.config.brushHeight);
-        this.gBrush.selectAll(".selection").attr("height", this.config.brushHeight);
+        // this.gBrush.selectAll(".selection").attr("y", this.height - this.config.brushHeight);
+        // this.gBrush.selectAll(".selection").attr("height", this.config.brushHeight);
     }
     _update() {
 
-    }
-}
-
-class MoonPhaseHandler {
-    constructor(selection, width, height) {
-        const handle = selection.append("g");
-        this.moonScale = d3.scaleLinear()
-            .range([-12, 12])
-            .domain([0, 1]);
-
-        handle.append("rect")
-            .attr("fill", "white")
-            .attr("x", -3)
-            .attr("y", 40)
-            .attr("width", 6)
-            .attr("height", height - 40);
-
-        this.circles = handle.selectAll("circle").data([{
-                m: 'l',
-                v: 0.5
-            }, {
-                m: 'd',
-                v: 0.5
-            }]).enter().append("circle")
-            .attr("fill", d => (d.m == 'd') ? "white" : "#3C5B9E")
-            .attr("cx", d => this.moonScale(d.v))
-            .attr("cy", 15)
-            .attr("r", 12);
-
-        this.handle = handle;
-    }
-    update(s) {
-
-        let v1 = s[0] / 1000;
-        let v2 = s[1] / 1000;
-
-        this.handle.filter(function(d, i) {
-                return i == 0;
-            }).selectAll("circle").data([{
-                    m: 'l',
-                    v: 0.5
-                },
-                {
-                    m: 'd',
-                    v: v1
-                }
-            ])
-            .attr("fill", d => (d.m === 'd') ? " #3C5B9E" : "white")
-            .attr("cx", d => this.moonScale(d.v));
-
-
-        this.handle.filter(function(d, i) {
-                return i == 1;
-            }).selectAll("circle").data([{
-                m: 'l',
-                v: 0.5
-
-            }, {
-                m: 'd',
-                v: v2
-            }])
-            .attr("fill", d => (d.m === 'd') ? "#3C5B9E" : "white")
-            .attr("cx", d => this.moonScale(d.v));
-
-        this.handle.attr("display", null).attr("transform", function(d, i) {
-            return "translate(" + s[i] + "," + 0 + ")";
-        });
     }
 }
 /*

@@ -75,7 +75,7 @@ export default function AutoGrid(container) {
             translateLeft = columns[c].start;
         }
 
-        if (align === "bottom") {
+        if (align === "top") {
             translateTop = rows[r].start + row[r].absoluteSize - absoluteHeight;
 
         } else {
@@ -112,6 +112,7 @@ export default function AutoGrid(container) {
                     absoluteTotal += __[i].size;
                 }
             }
+
             if (relativeTotal === null)
                 relativeTotal = 100;
             percentFactor = (absTotal - absoluteTotal) / relativeTotal;
