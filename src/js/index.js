@@ -34,7 +34,7 @@ async function draw() {
 
 
     let barConfig = {
-        components: ["bar", "dataLabel", "yAxis", "brush"],
+        components: ["bar", "dataLabel", "circle", "line", "yAxis", "brush"],
         opacity: 1,
         strokeWidth: 2,
         barWidth: 30,
@@ -45,8 +45,18 @@ async function draw() {
         x: d => d.time,
         y: d => d.max,
         yStart: d => d.min,
-
+        line: {
+            colorMap: d => "white",
+            y: d => d.average,
+            opacity: 0.7,
+        },
+        circle: {
+            colorMap: d => "white",
+            y: d => d.average,
+            opacity: 0.7,
+        },
         yAxis: {
+            opacity: 0.2,
             textColor: "white",
             strokeColor: "white",
             format: d => `${d}°C`
@@ -54,7 +64,7 @@ async function draw() {
         //dataLabel
         dataLabel: {
             colorMap: d => "white",
-            y: d => 0,
+            y: d => -10,
             text: d => {
                 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                 const date = new Date(d.time);
@@ -244,6 +254,7 @@ async function draw() {
     monthGroup.forEach((d) => {
         const time = d.values[0].time;
         const minMax = d3.extent(d.values, d => d.temperature);
+        const avg = d3.mean(d.values, d => d.temperature);
         if (minY === null && maxY === null) {
             minY = minMax[0];
             maxY = minMax[1]
@@ -257,7 +268,8 @@ async function draw() {
         mountMinMaxSample.push({
             time: time,
             min: minMax[0],
-            max: minMax[1]
+            max: minMax[1],
+            average: avg,
         })
     });
 

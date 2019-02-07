@@ -15,7 +15,7 @@ export default class yAxis extends d3Base {
             maxY: null,
             scaleX: null,
             y: d => d.y,
-            opacity: 0.5,
+            opacity: 0.3,
             yStart: null,
             domainX: null,
             format: d => d,
@@ -35,7 +35,7 @@ export default class yAxis extends d3Base {
             .tickFormat(this.config.format)
             .tickPadding(this.config.tickPadding)
             .tickSizeInner(-this.width)
-            .tickSizeOuter(this.tickSizeOuter);
+            .tickSizeOuter(-this.width);
 
         this.yAxisContainer = this.container
             .append("g")
