@@ -1,0 +1,29 @@
+{
+    "name": "weather-history",
+    "version": "0.0.1",
+    "description": "collection of reusable d3 components",
+    "main": "src/index.js",
+    "directories": {
+        "lib": "lib",
+        "test": "test"
+    },
+    "scripts": {
+        "dev": "webpack --mode development",
+        "build": "webpack --mode production",
+        "start": "webpack-dev-server --mode development --open",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "firakti",
+    "license": "ISC",
+    "devDependencies": {
+        "eslint": "^5.12.1",
+        "html-webpack-plugin": "^3.2.0",
+        "webpack": "^4.29.0",
+        "webpack-cli": "^3.2.1",
+        "webpack-dev-server": "^3.1.14"
+    },
+    "dependencies": {
+        "d3": "^5.7.0",
+        "resize-sensor": "0.0.6"
+    }
+}
