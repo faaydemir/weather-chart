@@ -38,12 +38,15 @@ export default class BrushX extends d3Base {
         return function() {
             if (d3.event == null)
                 return;
+
+            //position of brush start and end
             let s = d3.event.selection;
+
             if (s == null) {
                 self.handle.handle.attr("display", "none");
             } else {
                 var sx = s.map(self.scaleX.invert);
-                self.handle.update(s);
+                self.handle.update(s, sx);
                 self.gBrush.selectAll(".selection")
                     .attr("y", 0) //self.height - self.config.brushHeight
                     .attr("opacity", 1)
@@ -73,10 +76,8 @@ export default class BrushX extends d3Base {
             }])
             .enter();
         this.handle = new this.config.handle(handleSelection, this.width, this.height);
-        this.gBrush.call(this.brush.move, this.scaleX.domain());
+        this.gBrush.call(this.brush.move, this.scaleX.range());
         this.gBrush.selectAll(".selection").attr("fill", "white");
-        // this.gBrush.selectAll(".selection").attr("y", this.height - this.config.brushHeight);
-        // this.gBrush.selectAll(".selection").attr("height", this.config.brushHeight);
     }
     _update() {
 

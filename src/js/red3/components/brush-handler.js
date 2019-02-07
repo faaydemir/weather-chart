@@ -12,15 +12,11 @@ export default class BrushHandler {
 
         this.handle = handle;
     }
-    update(dataRange) {
-
-        let v1 = dataRange[0] / 1000;
-        let v2 = dataRange[1] / 1000;
-        console.log(dataRange);
+    update(handlePositions, dataRange) {
         this.handle
             .attr("display", null)
             .attr("transform", function(d, i) {
-                return "translate(" + dataRange[i] + "," + 0 + ")";
+                return "translate(" + handlePositions[i] + "," + 0 + ")";
             });
     }
 }

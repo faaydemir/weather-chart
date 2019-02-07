@@ -11,6 +11,7 @@ import Area from './red3/components/area';
 import Chart from './red3/charts/chart';
 import Sampler from './sampler';
 import Radial from './red3/components/radial';
+import MoonPhaseHandler from './moon-phase-handler';
 import DataRepository from './data-repository';
 import dataLabel, { DataLabel } from './red3/components/data-label';
 import * as utils from './red3/utils';
@@ -46,8 +47,7 @@ async function draw() {
         y: d => d.max,
         yStart: d => d.min,
         brush: {
-
-
+            handle: MoonPhaseHandler,
         },
         line: {
             colorMap: d => "white",

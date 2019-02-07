@@ -1,5 +1,5 @@
-import BrushHandler from './red3/components/brush-handler';
-export default class MoonPhaseHandler extends BrushHandler {
+import * as d3 from 'd3';
+export default class MoonPhaseHandler {
     constructor(selection, width, height) {
         const handle = selection.append("g");
         this.moonScale = d3.scaleLinear()
@@ -34,10 +34,11 @@ export default class MoonPhaseHandler extends BrushHandler {
     /**
      * @param  {Array} dataRange min max data of brush range
      */
-    update(dataRange) {
+    update(handlePositions, dataRange) {
 
-        let v1 = dataRange[0] / 1000;
-        let v2 = dataRange[1] / 1000;
+        let v1 = new Date(dataRange[0]).getUTCDate() / 30;
+
+        let v2 = new Date(dataRange[1]).getUTCDate() / 30;
 
         this.handle.filter(function(d, i) {
                 return i == 0;
@@ -68,7 +69,7 @@ export default class MoonPhaseHandler extends BrushHandler {
             .attr("cx", d => this.moonScale(d.v));
 
         this.handle.attr("display", null).attr("transform", function(d, i) {
-            return "translate(" + dataRange[i] + "," + 0 + ")";
+            return "translate(" + handlePositions[i] + "," + 0 + ")";
         });
     }
 }
