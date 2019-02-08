@@ -3,85 +3,94 @@
  * @param  {} data data to visualize
  * @param  {} config component configuration
  */
-import * as d3 from 'd3';
-import d3Base from './d3-base';
-import Handler from './brush-handler';
+import * as d3 from "d3";
+import d3Base from "./d3-base";
+import Handler from "./brush-handler";
 
 
 export default class BrushX extends d3Base {
-    constructor(container, data, config) {
-        // call base constructor
-        super(container, data, config)
+	constructor(container, data, config) {
+		// call base constructor
+		super(container, data, config);
 
 
-        this._defaultConfig = {
-            start: null,
-            end: null,
-            handle: null,
-            min: null,
-            max: null,
-            steps: null,
-            resize: true,
-            width: "100%",
-            height: "100%",
-            minRange: 0,
-            brushHeight: 140,
-            handle: Handler,
-        }
+		this._defaultConfig = {
+			start: null,
+			end: null,
+			handle: null,
+			min: null,
+			max: null,
+			steps: null,
+			resize: true,
+			width: "100%",
+			height: "100%",
+			minRange: 0,
+			brushHeight: 140,
+			handle: Handler,
+		};
+	}
+	_brushMoveHandler(self) {
+		return function() {
+			if (d3.event == null)
+				return;
 
-        // brush move handlers
-        this.OnBrushMove;
-        // brush end handlers
-        this.OnBrushMoveEnd;
-    }
-    _brushMoveHandler(self) {
-        return function() {
-            if (d3.event == null)
-                return;
+			//position of brush start and end
+			let s = d3.event.selection;
 
-            //position of brush start and end
-            let s = d3.event.selection;
+			if (s == null) {
+				self.handle.handle.attr("display", "none");
+			} else {
+				var sx = s.map(self.scaleX.invert);
+				self.handle.update(s, sx);
+				self.gBrush.selectAll(".selection")
+					.attr("y", 0) //self.height - self.config.brushHeight
+					.attr("opacity", 1)
+					.attr("height", self.config.height);
+			}
+		};
+	}
+	_brushEndHandler(self) {
+		return function() {
+			if (d3.event == null)
+				return;
 
-            if (s == null) {
-                self.handle.handle.attr("display", "none");
-            } else {
-                var sx = s.map(self.scaleX.invert);
-                self.handle.update(s, sx);
-                self.gBrush.selectAll(".selection")
-                    .attr("y", 0) //self.height - self.config.brushHeight
-                    .attr("opacity", 1)
-                    .attr("height", self.config.height);
-            }
-        }
-    }
-    _draw() {
+			let s = d3.event.selection;
 
-        this.brush = d3.brushX()
-            .extent([
-                [0, 0],
-                [this.width, this.height]
-            ])
-            .on("start brush end", this._brushMoveHandler(this));
+			if (s == null) {} else {
+				var sx = s.map(self.scaleX.invert);
+				self._raiseEvent("horizontalzoom", self, { min: sx[0], max: sx[1] });
+			}
+		};
+	}
+	_draw() {
+
+		this.brush = d3.brushX()
+			.extent([
+				[0, 0],
+				[this.width, this.height]
+			])
+			.on("start brush", this._brushMoveHandler(this))
+			.on("end", this._brushEndHandler(this));
 
 
-        this.gBrush = this.container.append("g")
-            .attr("class", "brush")
-            .call(this.brush);
+		this.gBrush = this.container.append("g")
+			.attr("class", "brush")
+			.call(this.brush);
 
-        let handleSelection = this.gBrush.selectAll(".handle--custom")
-            .data([{
-                type: "w"
-            }, {
-                type: "e"
-            }])
-            .enter();
-        this.handle = new this.config.handle(handleSelection, this.width, this.height);
-        this.gBrush.call(this.brush.move, this.scaleX.range());
-        this.gBrush.selectAll(".selection").attr("fill", "white");
-    }
-    _update() {
+		let handleSelection = this.gBrush.selectAll(".handle--custom")
+			.data([{
+				type: "w"
+			}, {
+				type: "e"
+			}])
+			.enter();
+		this.handle = new this.config.handle(handleSelection, this.width, this.height);
+		this.gBrush.call(this.brush.move, this.scaleX.range());
+		this.gBrush.selectAll(".selection").attr("fill", "white");
+	}
+	_update() {
 
-    }
+	}
 }
 /*
 class ValueBrushHandle {

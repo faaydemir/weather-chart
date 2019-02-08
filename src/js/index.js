@@ -13,9 +13,14 @@ import Sampler from './sampler';
 import Radial from './red3/components/radial';
 import MoonPhaseHandler from './moon-phase-handler';
 import DataRepository from './data-repository';
-import dataLabel, { DataLabel } from './red3/components/data-label';
+import dataLabel, {
+    DataLabel
+} from './red3/components/data-label';
 import * as utils from './red3/utils';
 import * as d3 from 'd3';
+import {
+    EventTypes
+} from './red3/event-bus';
 async function draw() {
 
     let radialConfig = {
@@ -105,29 +110,6 @@ async function draw() {
         y: d => 0,
         iconFunction: d => {
 
-            /*
-            https://img.icons8.com/color/48/000000/moderate-rain.png
-            https://img.icons8.com/color/48/000000/torrential-rain.png
-            https://img.icons8.com/color/48/000000/torrential-rain.png 
-            https://img.icons8.com/color/48/000000/light-rain.png
-            https://img.icons8.com/color/48/000000/cloud.png
-            https://img.icons8.com/color/48/000000/snow.png
-            https://img.icons8.com/color/48/000000/fog-day.png
-            https://img.icons8.com/color/48/000000/chance-of-storm.png
-            https://img.icons8.com/color/48/000000/cloud-lighting.png
-            https://img.icons8.com/color/48/000000/fog-day.png
-            https://img.icons8.com/color/48/000000/fog-night.png
-
-            rain heavy torrential-rain.png
-            rain medium   moderate-rain.png
-            rain light light-rain.png
-            cloud  cloud.png
-            thunderstorm  chance-of-storm.png
-            lightning; cloud-lighting.png
-            fog fog-day.png
-            sunny ->sun.png
-            */
-
             const iconSource = "https://img.icons8.com/color/30/";
             switch (d.condition) {
                 case "sunny":
@@ -169,6 +151,7 @@ async function draw() {
         colorMap: d => "white",
         minY: -10,
         strokeWidth: 2,
+        //components: ["line"],
         components: ["dataLabel", "line", "area", "event"],
         line: {
             opacity: 1,
@@ -187,30 +170,6 @@ async function draw() {
             maxY: 4,
             y: d => 1,
             iconFunction: d => {
-
-                /*
-                https://img.icons8.com/color/48/000000/moderate-rain.png
-                https://img.icons8.com/color/48/000000/torrential-rain.png
-                https://img.icons8.com/color/48/000000/torrential-rain.png 
-                https://img.icons8.com/color/48/000000/light-rain.png
-                https://img.icons8.com/color/48/000000/cloud.png
-                https://img.icons8.com/color/48/000000/snow.png
-                https://img.icons8.com/color/48/000000/fog-day.png
-                https://img.icons8.com/color/48/000000/chance-of-storm.png
-                https://img.icons8.com/color/48/000000/cloud-lighting.png
-                https://img.icons8.com/color/48/000000/fog-day.png
-                https://img.icons8.com/color/48/000000/fog-night.png
-
-                rain heavy torrential-rain.png
-                rain medium   moderate-rain.png
-                rain light light-rain.png
-                cloud  cloud.png
-                thunderstorm  chance-of-storm.png
-                lightning; cloud-lighting.png
-                fog fog-day.png
-                sunny ->sun.png
-                */
-
                 const iconSource = "https://img.icons8.com/color/40/";
                 switch (d.condition) {
                     case "sunny":
@@ -309,16 +268,33 @@ async function draw() {
 
     weatherChart.Init();
 
-    weatherChart.components["event"].data = {
-        weather: Sampler.sampleTo(istanbul, 20, Sampler.minMaxSampler(x => x.temperature), 2)
+    const eventData = {
+        weather: Sampler.sampleTo(istanbul, 50, Sampler.minMaxSampler(x => x.temperature), 2)
     }
 
-    weatherChart.components["dataLabel"].data = {
-        weather: Sampler.sampleTo(istanbul, 30, Sampler.minMaxSampler(x => x.temperature), 2)
-    }
+    weatherChart.components["event"]._setData(eventData);
+
+    weatherChart.components["dataLabel"]._setData(eventData);
 
     weatherChart.Draw();
     brushChart.Draw();
 
+    brushChart.eventBus.subscribe("horizontalzoom", (name, sender, args) => {
+        // get data in range
+        const dataInRange = istanbul.filter(x => x.time >= args.min && x.time <= args.max)
+
+        const eventData = {
+            weather: Sampler.sampleTo(dataInRange, 50, Sampler.minMaxSampler(x => x.temperature), 2)
+        }
+
+        weatherChart._setData({
+            weather: dataInRange
+        });
+
+        weatherChart.components["event"]._setData(eventData);
+        weatherChart.components["dataLabel"]._setData(eventData);
+
+        weatherChart.Update();
+    })
 }
-draw();
+draw()

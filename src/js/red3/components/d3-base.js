@@ -49,10 +49,12 @@ export default class d3Base {
 
     UpdateData(data) {
         this._setData(data);
+        Update();
+    }
+    Update() {
         this._initScales();
         this._updateDraw();
     }
-
     ZoomX(min, max) {
         this.scaleX.domain([min, max]);
         this._updateDraw();

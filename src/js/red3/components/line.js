@@ -1,6 +1,6 @@
-import d3Base from './d3-base';
-import * as d3 from 'd3';
-
+import d3Base from "./d3-base";
+import * as d3 from "d3";
+import { EventTypes } from "./../event-bus";
 export default class Line extends d3Base {
 
     constructor(container, data, config) {
@@ -13,8 +13,8 @@ export default class Line extends d3Base {
             colorMap: d3.scaleOrdinal(d3.schemeAccent),
             strokeWidth: 1,
             opacity: 1,
-            width: '100%',
-            height: '100%',
+            width: "100%",
+            height: "100%",
             resize: true,
             maxDataCount: null,
             minX: null,
