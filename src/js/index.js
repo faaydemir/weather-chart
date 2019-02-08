@@ -1,27 +1,37 @@
 // TODO change here to change all components from single file later
-import Label from './red3/components/label';
+
 import Line from './red3/components/line';
 import Bar from './red3/components/bar';
-import Circle from './red3/components/circle';
-import yAxis from './red3/components/yAxis';
-import xAxis from './red3/components/xAxis';
 import BrushX from './red3/components/brush';
 import Event from './red3/components/event';
 import Area from './red3/components/area';
 import Chart from './red3/charts/chart';
-import Sampler from './sampler';
+
 import Radial from './red3/components/radial';
+import DataLabel from './red3/components/data-label';
+import * as utils from './red3/utils';
+import Sampler from './sampler';
 import MoonPhaseHandler from './moon-phase-handler';
 import DataRepository from './data-repository';
-import dataLabel, {
-    DataLabel
-} from './red3/components/data-label';
-import * as utils from './red3/utils';
+
 import * as d3 from 'd3';
 import {
     EventTypes
 } from './red3/event-bus';
 async function draw() {
+
+    // init data 
+    let radialValue = 50;
+
+    const dataRepository = new DataRepository();
+
+    const istanbul = await dataRepository.getData();
+
+    const sampleData = Sampler.sampleTo(istanbul, 1000, weatherSampler, 1);
+
+    const eventData = {
+        weather: Sampler.sampleTo(istanbul, 36, weatherSampler, 1)
+    }
 
     let radialConfig = {
         max: 100,
@@ -37,7 +47,6 @@ async function draw() {
         x: d => d.time,
         y: d => d.temperature,
     }
-
 
     let barConfig = {
         components: ["bar", "dataLabel", "circle", "line", "yAxis", "brush"],
@@ -82,7 +91,6 @@ async function draw() {
         }
     }
 
-
     let areaConfig = {
         opacity: 0.1,
         strokeWidth: 2,
@@ -100,8 +108,6 @@ async function draw() {
         y: d => d.temperature,
         text: d => `${d.temperature}°C`
     }
-
-
 
     let eventConfig = {
         x: d => d.time,
@@ -135,24 +141,18 @@ async function draw() {
         }
 
     }
-    let brusgChartConfig = {
-        opacity: 1,
-        strokeWidth: 2,
-        barWidth: 30,
-        colorMap: d => "#62C0FC",
-        curve: "curveLinear",
-        x: d => d.time,
-        y: d => d.max,
-        yStart: d => d.min,
-    }
+
     let weatherConfig = {
         x: d => d.time,
         y: d => d.temperature,
         colorMap: d => "white",
+        textColor: "white",
+        strokeColor: "white",
+        format: d => new Date(d).toISOString().slice(0, 10),
         minY: -10,
         strokeWidth: 2,
         //components: ["line"],
-        components: ["dataLabel", "line", "area", "event"],
+        components: ["dataLabel", "line", "area", "event", "xAxis"],
         line: {
             opacity: 1,
             dataLabel: d => d.temperature,
@@ -162,10 +162,12 @@ async function draw() {
 
         },
         dataLabel: {
+            data: eventData,
             opacity: 0.1,
-            text: d => `${d.temperature} °C`
+            text: d => `${ Math.floor( d.temperature)} °C`
         },
         event: {
+            data: eventData,
             minY: -1,
             maxY: 4,
             y: d => 1,
@@ -196,14 +198,10 @@ async function draw() {
         }
     }
 
-    let radialValue = 50;
 
-    const dataRepository = new DataRepository();
+    // weatherChart.components["event"]._setData(eventData);
 
-    const istanbul = await dataRepository.getData();
-
-    const sampleData = Sampler.sampleTo(istanbul, 1000, Sampler.minMaxSampler(x => x.temperature), 2);
-
+    // weatherChart.components["dataLabel"]._setData(eventData);
     // group data by month (all data should be same year if not first group data by year)
     const monthGroup = d3.nest()
         .key(function(d) {
@@ -240,7 +238,7 @@ async function draw() {
     barConfig.maxY = maxY;
 
     const weatherData = {
-        weather: sampleData
+        weather: istanbul
     };
 
     const mountMinMaxData = {
@@ -263,38 +261,94 @@ async function draw() {
     bar.Draw();
 
     const brushChart = new Chart("#brush-chart", mountMinMaxData, barConfig);
-
     const weatherChart = new Chart("#weather-chart", weatherData, weatherConfig);
-
-    weatherChart.Init();
-
-    const eventData = {
-        weather: Sampler.sampleTo(istanbul, 50, Sampler.minMaxSampler(x => x.temperature), 2)
-    }
-
-    weatherChart.components["event"]._setData(eventData);
-
-    weatherChart.components["dataLabel"]._setData(eventData);
 
     weatherChart.Draw();
     brushChart.Draw();
 
     brushChart.eventBus.subscribe("horizontalzoom", (name, sender, args) => {
         // get data in range
-        const dataInRange = istanbul.filter(x => x.time >= args.min && x.time <= args.max)
+        const chartData = istanbul.filter(x => x.time >= args.min && x.time <= args.max);
+        const eventData = Sampler.sampleTo(chartData, 36, weatherSampler, 1);
 
-        const eventData = {
-            weather: Sampler.sampleTo(dataInRange, 50, Sampler.minMaxSampler(x => x.temperature), 2)
-        }
 
         weatherChart._setData({
-            weather: dataInRange
-        });
+            weather: chartData
+        })
 
-        weatherChart.components["event"]._setData(eventData);
-        weatherChart.components["dataLabel"]._setData(eventData);
+        weatherChart.components["event"]._setData({
+            weather: eventData
+        });
+        weatherChart.components["dataLabel"]._setData({
+            weather: eventData
+        });
 
         weatherChart.Update();
     })
 }
-draw()
+draw();
+
+
+function weatherSampler(dataArray) {
+    function jsonCopy(src) {
+        return JSON.parse(JSON.stringify(src));
+    }
+    if (dataArray.length < 2) {
+        return [];
+    }
+    const averageTemperature = dataArray.reduce((total, d, index, array) => {
+        if (index === 1)
+            total = total.temperature;
+        total += d.temperature;
+        if (index === array.length - 1) {
+            return total / array.length;
+        } else {
+            return total;
+        }
+    });
+    const averageCondition = dataArray.reduce((total, d, index, array) => {
+
+        if (index === 1) {
+            const map = new Map();
+            map.set(total.condition, 1);
+            total = map;
+        }
+        if (!total.has(d.condition)) {
+            total.set(d.condition, 1);
+        } else {
+            let weight = 1;
+            if (d.condition.includes("sunny")) {
+                weight = 0.1;
+            } else if (d.condition.includes("rain")) {
+                weight = 3;
+            } else if (d.condition.includes("thunderstorm")) {
+                weight = 5;
+            } else if (d.condition.includes("mist")) {
+                weight = 2;
+            } else if (d.condition.includes("snow")) {
+                weight = 10;
+            } else if (d.condition.includes("lightning")) {
+                weight = 5;
+            }
+            total.set(d.condition, total.get(d.condition) + weight);
+        }
+
+        if (index === dataArray.length - 1) {
+            let key,
+                value = -1;
+            total.forEach((v, k) => {
+                if (v > value) {
+                    key = k;
+                    value = v;
+                }
+            });
+            return key;
+        } else {
+            return total;
+        }
+    });
+    const sample = jsonCopy(dataArray[0]);
+    sample.temperature = averageTemperature;
+    sample.condition = averageCondition;
+    return [sample];
+}
