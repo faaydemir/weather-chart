@@ -10,16 +10,50 @@ export default class DataRepository {
             this.source = sourceUrl;
         var url = this.source;
 
-        return d3.text(url).then(
+
+
+        let weatherData = await d3.text(url).then(
             x => {
                 const semicolonParser = d3.dsvFormat(';')
                 const parsedData = semicolonParser.parse(x);
                 return this._simplifyData(parsedData);
             }
         );
+        let monthlyWeatherStatistic = this._getMonthlyWeatherStatistic(weatherData);
+
+        return [weatherData, monthlyWeatherStatistic];
 
     }
+    _getMonthlyWeatherStatistic(weatherData) {
 
+            // group data by month
+            const monthGroup = d3.nest()
+                .key(function(d) {
+                    return new Date(d.time).getMonth();
+                })
+                .entries(weatherData);
+
+            const monthStatistic = [];
+            let minY = null,
+                maxY = null;
+
+            // find min max and mean for each month
+            monthGroup.forEach((d) => {
+                const time = d.values[0].time;
+                const minMax = d3.extent(d.values, d => d.temperature);
+                const avg = d3.mean(d.values, d => d.temperature);
+
+                monthStatistic.push({
+                    time: time,
+                    min: minMax[0],
+                    max: minMax[1],
+                    average: avg,
+                });
+            });
+
+            return monthStatistic;
+        }
+        // clean data
     _simplifyData(data) {
 
         const parseTime = d3.timeParse("%d.%m.%Y %H:%M");

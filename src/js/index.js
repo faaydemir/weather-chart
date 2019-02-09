@@ -9,15 +9,10 @@ import Chart from './red3/charts/chart';
 
 import Radial from './red3/components/radial';
 import DataLabel from './red3/components/data-label';
-import * as utils from './red3/utils';
 import Sampler from './sampler';
 import MoonPhaseHandler from './moon-phase-handler';
 import DataRepository from './data-repository';
 
-import * as d3 from 'd3';
-import {
-    EventTypes
-} from './red3/event-bus';
 async function draw() {
 
     // init data 
@@ -25,38 +20,66 @@ async function draw() {
 
     const dataRepository = new DataRepository();
 
-    const istanbul = await dataRepository.getData();
-
-    const sampleData = Sampler.sampleTo(istanbul, 1000, weatherSampler, 1);
+    const [allWeatherData, monthMinMax] = await dataRepository.getData();
+    const [minTemperature, maxTemperature] = monthMinMax.reduce((minMax, current, index) => {
+        if (index === 1) {
+            minMax = [minMax.min, minMax.max];
+        }
+        if (current.min < minMax[0]) {
+            minMax[0] = current.min;
+        }
+        if (current.max > minMax[1]) {
+            minMax[1] = current.max;
+        }
+        return minMax;
+    })
+    const sampleWeatherData = Sampler.sampleTo(allWeatherData, 1000, weatherSampler, 1);
 
     const eventData = {
-        weather: Sampler.sampleTo(istanbul, 36, weatherSampler, 1)
-    }
+        weather: Sampler.sampleTo(sampleWeatherData, 36, weatherSampler, 1)
+    };
+    const weatherData = {
+        weather: sampleWeatherData
+    };
+    const mountMinMaxData = {
+        weather: monthMinMax
+    };
+
 
     let radialConfig = {
         max: 100,
         min: 0,
         text: d => `%${Math.round(d)}`
     }
-    let lineConfig = {
-        opacity: 1,
+
+
+    let genericConfig = {
+        opacity: 0.8,
         strokeWidth: 2,
         colorMap: d => "white",
-        curve: "curveLinear",
-        dataLabel: d => d.temperature,
         x: d => d.time,
         y: d => d.temperature,
+        text: d => `${d.temperature}°C` // for dataLabel module
+    }
+    const barConfig = {
+        colorMap: d => "#62C0FC",
+        x: d => d.time,
+        y: d => d.max,
+        yStart: d => d.min,
+        minY: minTemperature,
+        maxY: maxTemperature,
+        barWidth: 30,
     }
 
-    let barConfig = {
+    let brushChartConfig = {
         components: ["bar", "dataLabel", "circle", "line", "yAxis", "brush"],
         opacity: 1,
         strokeWidth: 2,
         barWidth: 30,
         colorMap: d => "#62C0FC",
         height: 100,
-        minY: 0,
-        maxY: 0,
+        minY: minTemperature,
+        maxY: maxTemperature,
         x: d => d.time,
         y: d => d.max,
         yStart: d => d.min,
@@ -79,7 +102,6 @@ async function draw() {
             strokeColor: "white",
             format: d => `${d}°C`
         },
-        //dataLabel
         dataLabel: {
             colorMap: d => "white",
             y: d => -10,
@@ -91,29 +113,12 @@ async function draw() {
         }
     }
 
-    let areaConfig = {
-        opacity: 0.1,
-        strokeWidth: 2,
-        colorMap: d => "white",
-        curve: "curveLinear",
-        x: d => d.time,
-        y: d => d.temperature,
-    }
-
-    let labelConfig = {
-        opacity: 0.1,
-        strokeWidth: 2,
-        colorMap: d => "white",
-        x: d => d.time,
-        y: d => d.temperature,
-        text: d => `${d.temperature}°C`
-    }
 
     let eventConfig = {
         x: d => d.time,
         minY: -1,
-        maxY: 1,
-        y: d => 0,
+        maxY: 5,
+        y: d => 1,
         iconFunction: d => {
 
             const iconSource = "https://img.icons8.com/color/30/";
@@ -149,14 +154,11 @@ async function draw() {
         textColor: "white",
         strokeColor: "white",
         format: d => new Date(d).toISOString().slice(0, 10),
-        minY: -10,
+        minY: minTemperature - 10,
+        maxY: maxTemperature,
         strokeWidth: 2,
-        //components: ["line"],
         components: ["dataLabel", "line", "area", "event", "xAxis"],
-        line: {
-            opacity: 1,
-            dataLabel: d => d.temperature,
-        },
+
         area: {
             opacity: 0.1,
 
@@ -169,7 +171,7 @@ async function draw() {
         event: {
             data: eventData,
             minY: -1,
-            maxY: 4,
+            maxY: 5,
             y: d => 1,
             iconFunction: d => {
                 const iconSource = "https://img.icons8.com/color/40/";
@@ -192,75 +194,31 @@ async function draw() {
                         return `${iconSource}torrential-rain.png`;
                     default:
                         return `${iconSource}sun.png`;
-
                 }
             }
         }
     }
 
 
-    // weatherChart.components["event"]._setData(eventData);
 
-    // weatherChart.components["dataLabel"]._setData(eventData);
-    // group data by month (all data should be same year if not first group data by year)
-    const monthGroup = d3.nest()
-        .key(function(d) {
-            return new Date(d.time).getMonth();
-        })
-        .entries(istanbul);
-
-    const mountMinMaxSample = [];
-    let minY = null,
-        maxY = null;
-    monthGroup.forEach((d) => {
-        const time = d.values[0].time;
-        const minMax = d3.extent(d.values, d => d.temperature);
-        const avg = d3.mean(d.values, d => d.temperature);
-        if (minY === null && maxY === null) {
-            minY = minMax[0];
-            maxY = minMax[1]
-        } else {
-            if (minMax[0] < minY) {
-                minY = minMax[0];
-            }
-            if (minMax[1] > maxY)
-                maxY = minMax[1];
-        }
-        mountMinMaxSample.push({
-            time: time,
-            min: minMax[0],
-            max: minMax[1],
-            average: avg,
-        })
-    });
-
-    barConfig.minY = minY;
-    barConfig.maxY = maxY;
-
-    const weatherData = {
-        weather: istanbul
-    };
-
-    const mountMinMaxData = {
-        weather: mountMinMaxSample
-    };
-    const dataLabel = new DataLabel("#data-label", weatherData, labelConfig);
-    const line = new Line("#line", weatherData, lineConfig);
-    const area = new Area("#area", weatherData, areaConfig);
-    const event = new Event("#event", weatherData, eventConfig);
     const radial = new Radial("#radial", radialValue, radialConfig);
-    const brush = new BrushX("#brush", weatherData, lineConfig);
     const bar = new Bar("#bar", mountMinMaxData, barConfig);
+    const event = new Event("#event", weatherData, eventConfig);
 
-    line.Draw();
-    area.Draw();
+    const dataLabel = new DataLabel("#data-label", weatherData, genericConfig);
+    const line = new Line("#line", weatherData, genericConfig);
+    const area = new Area("#area", weatherData, genericConfig);
+    const brush = new BrushX("#brush", weatherData, genericConfig);
+
+    radial.Draw();
+    bar.Draw();
     event.Draw();
     dataLabel.Draw();
-    radial.Draw();
+    line.Draw();
+    area.Draw();
     brush.Draw();
-    bar.Draw();
 
-    const brushChart = new Chart("#brush-chart", mountMinMaxData, barConfig);
+    const brushChart = new Chart("#brush-chart", mountMinMaxData, brushChartConfig);
     const weatherChart = new Chart("#weather-chart", weatherData, weatherConfig);
 
     weatherChart.Draw();
@@ -268,7 +226,7 @@ async function draw() {
 
     brushChart.eventBus.subscribe("horizontalzoom", (name, sender, args) => {
         // get data in range
-        const chartData = istanbul.filter(x => x.time >= args.min && x.time <= args.max);
+        const chartData = allWeatherData.filter(x => x.time >= args.min && x.time <= args.max);
         const eventData = Sampler.sampleTo(chartData, 36, weatherSampler, 1);
 
 
