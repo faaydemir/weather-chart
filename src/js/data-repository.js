@@ -16,7 +16,7 @@ export default class DataRepository {
             x => {
                 const semicolonParser = d3.dsvFormat(';')
                 const parsedData = semicolonParser.parse(x);
-                return this._simplifyData(parsedData);
+                return this._simplifyData(parsedData.reverse());
             }
         );
         let monthlyWeatherStatistic = this._getMonthlyWeatherStatistic(weatherData);

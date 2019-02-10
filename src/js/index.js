@@ -70,6 +70,38 @@ async function draw() {
         maxY: maxTemperature,
         barWidth: 30,
     }
+    let eventConfig = {
+        x: d => d.time,
+        minY: -1,
+        maxY: 5,
+        y: d => 1,
+        iconFunction: d => {
+
+            const iconSource = "https://img.icons8.com/color/30/";
+            switch (d.condition) {
+                case "sunny":
+                    return `${iconSource}sun.png`;
+                case "fog":
+                    return `${iconSource}fog-day.png`;
+                case "lightning":
+                    return `${iconSource}cloud-lighting.png`;
+                case "thunderstorm":
+                    return `${iconSource}chance-of-storm.png`;
+                case "cloud":
+                    return `${iconSource}cloud.png`;
+                case "rain light":
+                    return `${iconSource}light-rain.png`;
+                case "rain medium":
+                    return `${iconSource}moderate-rain.png`;
+                case "rain heavy":
+                    return `${iconSource}torrential-rain.png`;
+                default:
+                    return `${iconSource}sun.png`;
+
+            }
+        }
+
+    }
 
     let brushChartConfig = {
         components: ["bar", "dataLabel", "circle", "line", "yAxis", "brush"],
@@ -114,38 +146,6 @@ async function draw() {
     }
 
 
-    let eventConfig = {
-        x: d => d.time,
-        minY: -1,
-        maxY: 5,
-        y: d => 1,
-        iconFunction: d => {
-
-            const iconSource = "https://img.icons8.com/color/30/";
-            switch (d.condition) {
-                case "sunny":
-                    return `${iconSource}sun.png`;
-                case "fog":
-                    return `${iconSource}fog-day.png`;
-                case "lightning":
-                    return `${iconSource}cloud-lighting.png`;
-                case "thunderstorm":
-                    return `${iconSource}chance-of-storm.png`;
-                case "cloud":
-                    return `${iconSource}cloud.png`;
-                case "rain light":
-                    return `${iconSource}light-rain.png`;
-                case "rain medium":
-                    return `${iconSource}moderate-rain.png`;
-                case "rain heavy":
-                    return `${iconSource}torrential-rain.png`;
-                default:
-                    return `${iconSource}sun.png`;
-
-            }
-        }
-
-    }
 
     let weatherConfig = {
         x: d => d.time,
@@ -157,7 +157,7 @@ async function draw() {
         minY: minTemperature - 10,
         maxY: maxTemperature,
         strokeWidth: 2,
-        components: ["dataLabel", "line", "area", "event", "xAxis"],
+        components: ["dataLabel", "area", "event", "xAxis", "tooltip", "line"],
 
         area: {
             opacity: 0.1,

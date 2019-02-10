@@ -87,9 +87,21 @@ export default class Line extends d3Base {
         return function(d, i) {
             let bisector = d3.bisector(self.config.x).left;
             let x0 = self.scaleX.invert(d3.mouse(this)[0]);
-            let selectedIndex = bisector(d, x0, 1);
-            let args = {};
 
+            let selectedIndex = bisector(d, x0, 1);
+
+            // for (let j = 0; j < d.length; j++) {
+            //     if (self.config.x(d[j]) >= x0) {
+            //         selectedIndex = j;
+            //     }
+            // }
+            // if (selectedIndex !== d.length - 1) {
+            //     if ((d[selectedIndex + 1] - x0) < (d[selectedIndex] - x0)) {
+            //         selectedIndex = selectedIndex + 1
+            //     }
+            // }
+
+            let args = {};
             args.d = d[selectedIndex];
             args.i = i;
             args.x = event.pageX;
@@ -114,7 +126,7 @@ export default class Line extends d3Base {
             if (!this.lines.hasOwnProperty(key)) continue;
             if (!this.data.hasOwnProperty(key)) continue;
 
-            //updvalueate data
+            //update value
             this.lines[key].datum(this.data[key]);
         }
         this._lineContainer.selectAll("path").attr("d", this.d);

@@ -1,5 +1,5 @@
 * {
-    margin: 0;
+    margin: 10px;
     padding: 0;
 }
 
@@ -66,10 +66,10 @@ h3 {}
     padding: 2px;
 }
 
-.tooltip {
-    background-color: #EDEBE2;
-    padding: 5px;
-}
+
+/* .tooltip {
+    padding: 10px;
+} */
 
 .line {
     fill: none;
