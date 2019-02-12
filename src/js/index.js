@@ -21,6 +21,7 @@ async function draw() {
     const dataRepository = new DataRepository();
 
     const [allWeatherData, monthMinMax] = await dataRepository.getData();
+
     const [minTemperature, maxTemperature] = monthMinMax.reduce((minMax, current, index) => {
         if (index === 1) {
             minMax = [minMax.min, minMax.max];
@@ -49,7 +50,11 @@ async function draw() {
     let radialConfig = {
         max: 100,
         min: 0,
-        text: d => `%${Math.round(d)}`
+        width: 50,
+        height: 50,
+        text: d => `%${Math.round(d)}`,
+        fontColor: '#3C5B9E'
+
     }
 
 
@@ -167,6 +172,21 @@ async function draw() {
             data: eventData,
             opacity: 0.1,
             text: d => `${ Math.floor( d.temperature)} °C`
+        },
+        tooltip: {
+            html: d => {
+                let html = `<div class="tooltip">
+                           <span>${Math.round(d.temperature * 100) / 100}°C</span>
+                           <span> ${new Date(d.time).toDateString()}</span>
+                           <span> Random Val</span>
+                           <div id="rad"></div>
+                            </div>`
+                return html;
+            },
+            onTooltipCreated: d => {
+                var radial = new Radial("#rad", Math.random() * 100, radialConfig);
+                radial.Draw();
+            }
         },
         event: {
             data: eventData,

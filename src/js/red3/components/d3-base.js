@@ -121,8 +121,8 @@ export default class d3Base {
         if (typeof container === "string") { // if #divId , or  .divclass 
             this.container = d3.select(container)
                 .append("svg")
-                .attr("width", "100%")
-                .attr("height", "100%");
+                .attr("width", this.config.width)
+                .attr("height", this.config.height);
         } else { // else  assume container is appended g or svg
             this.container = container;
         }
